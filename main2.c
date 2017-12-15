@@ -96,7 +96,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         tmp += data[j] * vec[colTmp];
     }
     sum[0][warp] = tmp;
-    cudaThreadSynchronize();
+    __syncthreads();
     int times = 1,l = WARP_SIZE / 2;
     while(warp / l == 0)
     {
@@ -109,7 +109,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         sum[j][warp - scale] += sum[j-1][warp];
         scale /= 2;
     }
-    cudaThreadSynchronize();
+    __syncthreads();
     res[i] = sum[5][0];
   }
 }
