@@ -101,7 +101,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
       float temp = 0.0;
       for(int j = 0;j < WARP_SIZE;j ++)
       {
-          temp += sum[0][j];
+          temp += sum[j];
       }
       res[i] = temp;
     }
