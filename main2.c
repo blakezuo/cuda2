@@ -86,32 +86,31 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
   int i = blockIdx.x * WARP_PER_BLOCK + threadIdx.x / WARP_SIZE;
   int warp = threadIdx.x % WARP_SIZE;
   if(i<dim){
-    // __shared__ float sum[6][WARP_SIZE];
-    //for(int j=0;j<6; j++) sum[j][warp] = 0.0;
+    __shared__ float sum[6][WARP_SIZE];
+    for(int j=0;j<6; j++) sum[j][warp] = 0.0;
     float tmp = 0;
-    res[i] = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
     {
         int colTmp = col[j];
         tmp += data[j] * vec[colTmp];
     }
-    // sum[0][warp] = tmp;
+    printf("%d\n",tmp);
+    sum[0][warp] = tmp;
     __syncthreads();
-    res[i] += tmp;
-    // int times = 1,l = WARP_SIZE / 2;
-    // while(warp / l == 0)
-    // {
-    //     times ++;
-    //     l /= 2;
-    // }
-    // int scale = WARP_SIZE / 2;
-    // for(int j=1;j<=times;j ++)
-    // {
-    //     sum[j][warp - scale] += sum[j-1][warp];
-    //     scale /= 2;
-    // }
-    // __syncthreads();
-    // res[i] = sum[5][0];
+    int times = 1,l = WARP_SIZE / 2;
+    while(warp / l == 0)
+    {
+        times ++;
+        l /= 2;
+    }
+    int scale = WARP_SIZE / 2;
+    for(int j=1;j<=times;j ++)
+    {
+        sum[j][warp - scale] += sum[j-1][warp];
+        scale /= 2;
+    }
+    __syncthreads();
+    res[i] = sum[5][0];
   }
 }
 
