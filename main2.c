@@ -87,8 +87,8 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
   int warp = threadIdx.x % WARP_SIZE;
   printf("%d\n",blockIdx.x);
   if(i<dim){
-    //__shared__ float sum[6][WARP_SIZE];
-    //for(int j=0;j<6; j++) sum[j][warp] = 0.0;
+    __shared__ float sum[6][WARP_SIZE];
+    for(int j=0;j<6; j++) sum[j][warp] = 0.0;
     float tmp = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
     {
@@ -96,18 +96,16 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         tmp += data[j] * vec[colTmp];
     }
     __syncthreads();
-    res[i] += tmp;
-    // sum[0][warp] = tmp;
-    // __syncthreads();
-    // if(warp == 0)
-    // {
-    //   float temp = 0.0;
-    //   for(int j = 0;j < WARP_SIZE;j ++)
-    //   {
-    //       temp += sum[0][j];
-    //   }
-    //   res[i] = temp;
-    // }
+    sum[0][warp] = tmp;
+    if(warp == 0)
+    {
+      float temp = 0.0;
+      for(int j = 0;j < WARP_SIZE;j ++)
+      {
+          temp += sum[0][j];
+      }
+      res[i] = temp;
+    }
 
 
     // int times = 1,l = WARP_SIZE / 2;
