@@ -83,12 +83,11 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 }
 
 __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
-  int i = (blockIdx.x * blockDim.x + threadIdx.x)/ WARP_SIZE;
+  int i = (blockIdx.x * blockDim.x + threadIdx.x)/ WARP_SIZE;//WARP_SIZE=32
   int warp = threadIdx.x % WARP_SIZE;
-  printf("%d\n",blockIdx.x);
   if(i<dim){
-    __shared__ float sum[6][WARP_SIZE];
-    for(int j=0;j<6; j++) sum[j][warp] = 0.0;
+    __shared__ float sum[WARP_SIZE];
+    sum[warp] = 0.0;
     float tmp = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
     {
@@ -96,7 +95,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         tmp += data[j] * vec[colTmp];
     }
     __syncthreads();
-    sum[0][warp] = tmp;
+    sum[warp] = tmp;
     if(warp == 0)
     {
       float temp = 0.0;
