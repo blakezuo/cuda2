@@ -7,8 +7,6 @@
 #define ITERATIONS 10
 #define DIM_THREAD_BLOCK_X 256
 #define DIM_THREAD_BLOCK_Y 1
-#define WARP_PER_BLOCK 8
-#define WARP_SIZE 32
 
 using namespace std;
 
@@ -82,37 +80,50 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
     assert(nnzAssigned == n);
 }
 
-__global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
-  int i = blockIdx.x * WARP_PER_BLOCK + threadIdx.x / WARP_SIZE;
-  int warp = threadIdx.x % WARP_SIZE;
-  printf("%d %d %d\n",i,blockIdx.x,threadIdx.x);
+/*__global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i<dim){
-    __shared__ float sum[6][WARP_SIZE];
-    for(int j=0;j<6; j++) sum[j][warp] = 0.0;
     float tmp = 0;
-    for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
-    {
-        int colTmp = col[j];
-        tmp += data[j] * vec[colTmp];
+    for(int j=row[i]; j<row[i+1]; j++){
+      int colTmp = col[j];
+      tmp +=  data[j] * vec[colTmp];
     }
-    sum[0][warp] = tmp;
-    __syncthreads();
-    int times = 1,l = WARP_SIZE / 2;
-    while(warp / l == 0)
-    {
-        times ++;
-        l /= 2;
-    }
-    int scale = WARP_SIZE / 2;
-    for(int j=1;j<=times;j ++)
-    {
-        sum[j][warp - scale] += sum[j-1][warp];
-        scale /= 2;
-    }
-    __syncthreads();
-    res[i] = sum[5][0];
+    res[i] = tmp;
   }
+}*/
+
+__global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
+
+  int i=(blockIdx.x * blockDim.x + threadIdx.x)/32;
+  int p=row[i]+threadIdx.x%32;
+ // int p=threadIdx.x;
+  __shared__ float s_a[32];  
+ float tmp=0;
+ if(i<dim){
+
+for(; p< row[i+1]; ) 
+{  
+  int colTmp = col[p];
+  tmp +=  data[p] * vec[colTmp];
+  p+=32;
+
 }
+
+s_a[threadIdx.x%32]=tmp;
+
+__syncthreads();
+if(threadIdx.x%32==0){
+float sum=0;
+
+for(int j=0;j<32;j++){
+  sum+=s_a[j];
+}
+res[i] = sum;
+//printf("%f ",sum);
+}
+}
+}
+
 
 
 
@@ -160,7 +171,7 @@ int main(){
   cudaMemcpy(vec_gpu, vec, sizeof(float)*dim, cudaMemcpyHostToDevice);
 
   dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
-  dim3 grid((size_t)ceil(((float)(dim*WARP_SIZE)/ (float)DIM_THREAD_BLOCK_X)), 1);
+  dim3 grid((size_t)ceil((float)dim*32/ ((float)DIM_THREAD_BLOCK_X)), 1);
 
   spmv<<<grid,block>>>(row_gpu, col_gpu, data_gpu, vec_gpu, result_gpu, dim, n);
   cudaThreadSynchronize();
