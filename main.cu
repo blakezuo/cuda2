@@ -92,7 +92,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
     {
         int colTmp = col[j];
-        temp += data[j] * vec[colTmp];
+        tmp += data[j] * vec[colTmp];
     }
     sum[0][warp] = tmp;
     __syncthreads();
