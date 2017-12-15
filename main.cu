@@ -82,7 +82,6 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 
 /*__global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
   int i = blockIdx.x * blockDim.x + threadIdx.x;
-  printf("%d\n",i);
   if(i<dim){
     float tmp = 0;
     for(int j=row[i]; j<row[i+1]; j++){
@@ -96,6 +95,7 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
 
   int i=(blockIdx.x * blockDim.x + threadIdx.x)/32;
+  printf("%d\n",i);
   int p=row[i]+threadIdx.x%32;
  // int p=threadIdx.x;
   __shared__ float s_a[32];  
