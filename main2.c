@@ -86,7 +86,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
   int i = blockIdx.x * WRAP_PER_BLOCK + threadIdx.x / WARP_SIZE;
   int warp = threadIdx.x % WARP_SIZE;
   if(i<dim){
-    __share__ float sum[6][WARP_SIZE];
+    __shared__ float sum[6][WARP_SIZE];
     for(int j=0;j<6; j++) sum[j][warp] = 0.0;
     float tmp = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
