@@ -71,7 +71,7 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
             {
                 // Assign (i,j) a value
                 col[nnzAssigned] = j;
-    data[nnzAssigned] = 1;
+		data[nnzAssigned] = 1;
                 nnzAssigned++;
             }
         }
