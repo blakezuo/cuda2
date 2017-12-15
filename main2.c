@@ -94,7 +94,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         int colTmp = col[j];
         tmp += data[j] * vec[colTmp];
     }
-    printf("%d\n",tmp);
+    printf("%f\n",tmp);
     sum[0][warp] = tmp;
     __syncthreads();
     int times = 1,l = WARP_SIZE / 2;
