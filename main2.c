@@ -97,20 +97,29 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
     }
     sum[0][warp] = tmp;
     __syncthreads();
-    int times = 1,l = WARP_SIZE / 2;
-    while(warp / l == 0)
+    if(warp == 0)
     {
-        times ++;
-        l /= 2;
+      float temp = 0.0;
+      for(int j = 0;j < WARP_SIZE;j ++)
+      {
+          temp += sum[0][j];
+      }
+      res[i] = temp;
     }
-    int scale = WARP_SIZE / 2;
-    for(int j=1;j<=times;j ++)
-    {
-        sum[j][warp - scale] += sum[j-1][warp];
-        scale /= 2;
-    }
-    __syncthreads();
-    res[i] = sum[5][0];
+    // int times = 1,l = WARP_SIZE / 2;
+    // while(warp / l == 0)
+    // {
+    //     times ++;
+    //     l /= 2;
+    // }
+    // int scale = WARP_SIZE / 2;
+    // for(int j=1;j<=times;j ++)
+    // {
+    //     sum[j][warp - scale] += sum[j-1][warp];
+    //     scale /= 2;
+    // }
+    // __syncthreads();
+    // res[i] = sum[5][0];
   }
 }
 
