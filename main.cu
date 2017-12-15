@@ -87,18 +87,17 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
   int warp = threadIdx.x % WARP_SIZE;
   if(i<dim){
     // __shared__ float sum[6][WARP_SIZE];
-    __shared__ float sum = 0;
-    for(int j=0;j<6; j++) sum[j][warp] = 0.0;
+    //for(int j=0;j<6; j++) sum[j][warp] = 0.0;
     float tmp = 0;
+    res[i] = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)
     {
         int colTmp = col[j];
         tmp += data[j] * vec[colTmp];
     }
     // sum[0][warp] = tmp;
-    sum += temp;
     __syncthreads();
-    res[i] = sum;
+    res[i] += tmp;
     // int times = 1,l = WARP_SIZE / 2;
     // while(warp / l == 0)
     // {
