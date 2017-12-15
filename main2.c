@@ -83,7 +83,7 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 }
 
 __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
-  int i = blockIdx.x * WARP_PER_BLOCK + threadIdx.x / WARP_SIZE;
+  int i = (blockIdx.x * blockDim.x + threadIdx.x)/ WARP_SIZE;
   int warp = threadIdx.x % WARP_SIZE;
   printf("%d\n",blockIdx.x);
   if(i<dim){
@@ -160,7 +160,7 @@ int main(){
   cudaMemcpy(vec_gpu, vec, sizeof(float)*dim, cudaMemcpyHostToDevice);
 
   dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
-  dim3 grid((size_t)ceil(((float)(dim*WARP_SIZE)/ (float)DIM_THREAD_BLOCK_X)), 1);
+  dim3 grid((size_t)ceil((float)dim*WARP_SIZE/ ((float)DIM_THREAD_BLOCK_X)), 1);
 
   spmv<<<grid,block>>>(row_gpu, col_gpu, data_gpu, vec_gpu, result_gpu, dim, n);
   cudaThreadSynchronize();
