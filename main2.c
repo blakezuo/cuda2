@@ -85,9 +85,10 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
   int i = (blockIdx.x * blockDim.x + threadIdx.x)/ WARP_SIZE;//WARP_SIZE=32,计算改warp处理的行号
   int warp = threadIdx.x % WARP_SIZE;//计算此线程在该行所在warp的序号（0~32）
+  int warp_num = threadIdx.x / WARP_SIZE;
   if(i<dim){
-    __shared__ float sum[WARP_SIZE];//存该行的计算结果
-    sum[warp] = 0.0;
+    __shared__ float sum[DIM_THREAD_BLOCK_X];//存该行的计算结果
+    sum[threadIdx.x] = 0.0;
     float tmp = 0;
     for(int j=row[i] + warp; j<row[i+1];j=j+WARP_SIZE)//每个线程从该行的第warp个非零元素起，
                                                       //每隔32个计算一个非零元素
@@ -95,12 +96,12 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
         int colTmp = col[j];
         tmp += data[j] * vec[colTmp];
     }
-    sum[warp] = tmp;//计算第i行的wrap号元素的计算结果
+    sum[threadIdx.x] = tmp;//计算第i行的wrap号元素的计算结果
     __syncthreads();
     if(warp == 0)//每行wrap号为0的线程负责计算该行最终结果并写入res[i]。(临时方法，为了测试正确性)
     {
       float temp = 0.0;
-      for(int j = 0;j < WARP_SIZE;j ++)
+      for(int j = threadIdx.x;j < WARP_SIZE;j ++)
       {
           temp += sum[j];
       }
