@@ -27,7 +27,7 @@ void compare(float* res1, float* res2, int n){
     if((a<0.01)&&(b<0.01)){
       continue;
     }
-    if(i<100)
+    if(i<10)
       printf("i=%d %lf %lf\n",i,a,b);
     float diff=(a-b)/(a+0.000001);
     if(diff<0)
