@@ -84,8 +84,7 @@ void initMatrix(int *row, int *col, float *data, int n, int dim){
 
 __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, int dim, int n){
   int i = (blockIdx.x * blockDim.x + threadIdx.x)/ WARP_SIZE;//WARP_SIZE=32,计算改warp处理的行号
-  int warp = threadIdx.x % WARP_SIZE;//计算此线程在该行所在warp的序号（0~32）
-  int warp_num = threadIdx.x / WARP_SIZE;
+  int warp = threadIdx.x % WARP_SIZE;//计算此线程在该行所在warp的序号（0~32)
   if(i<dim){
     __shared__ float sum[DIM_THREAD_BLOCK_X];//存该行的计算结果
     sum[threadIdx.x] = 0.0;
@@ -101,7 +100,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
     if(warp == 0)//每行wrap号为0的线程负责计算该行最终结果并写入res[i]。(临时方法，为了测试正确性)
     {
       float temp = 0.0;
-      for(int j = threadIdx.x;j < WARP_SIZE;j ++)
+      for(int j = threadIdx.x;j < threadIdx.x + WARP_SIZE;j ++)
       {
           temp += sum[j];
       }
