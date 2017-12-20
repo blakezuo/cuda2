@@ -126,8 +126,8 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
 
 int main(){
 
-  int dim=20000;
-  int n=dim*dim/100;
+  int dim=100000;
+  int n=dim*dim/1000;
   int *row = (int*)malloc(sizeof(int)*(dim+1));
   int *col = (int*)malloc(sizeof(int)*n);
   float *data = (float*)malloc(sizeof(float)*n);
