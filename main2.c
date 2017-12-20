@@ -115,8 +115,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
     sum[threadIdx.x] += sum[(threadIdx.x + 2) % DIM_THREAD_BLOCK_X];
     sum[threadIdx.x] += sum[(threadIdx.x + 1) % DIM_THREAD_BLOCK_X];
     __syncthreads();
-    if(warp == 0)
-      res[i] = sum[threadIdx.x];
+    res[i] = sum[threadIdx.x / WARP_SIZE * WARP_SIZE];
     sum[threadIdx.x] = 0.0;
   }
 }
