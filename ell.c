@@ -98,26 +98,25 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
     sum[threadIdx.x] = tmp;//计算第i行的wrap号元素的计算结果
     __syncthreads();
     
-    if(warp == 0)//每行wrap号为0的线程负责计算该行最终结果并写入res[i]。(临时方法，为了测试正确性)
-    {
-      float temp = 0.0;
-      for(int j = threadIdx.x;j < threadIdx.x + WARP_SIZE;j ++)
-      {
-          temp += sum[j];
-      }
-      res[i] = temp;
-    }
-    __syncthreads();
-
-    // sum[threadIdx.x] += sum[(threadIdx.x + 16) % DIM_THREAD_BLOCK_X];
-    // sum[threadIdx.x] += sum[(threadIdx.x + 8) % DIM_THREAD_BLOCK_X];
-    // sum[threadIdx.x] += sum[(threadIdx.x + 4) % DIM_THREAD_BLOCK_X];
-    // sum[threadIdx.x] += sum[(threadIdx.x + 2) % DIM_THREAD_BLOCK_X];
-    // sum[threadIdx.x] += sum[(threadIdx.x + 1) % DIM_THREAD_BLOCK_X];
+    // if(warp == 0)//每行wrap号为0的线程负责计算该行最终结果并写入res[i]。(临时方法，为了测试正确性)
+    // {
+    //   float temp = 0.0;
+    //   for(int j = threadIdx.x;j < threadIdx.x + WARP_SIZE;j ++)
+    //   {
+    //       temp += sum[j];
+    //   }
+    //   res[i] = temp;
+    // }
     // __syncthreads();
-
-    // res[i] = sum[threadIdx.x / WARP_SIZE * WARP_SIZE];
-    // sum[threadIdx.x] = 0.0;
+    //if(warp < WARP_SIZE / 2)
+    sum[threadIdx.x] += sum[(threadIdx.x + 16) % DIM_THREAD_BLOCK_X];
+    sum[threadIdx.x] += sum[(threadIdx.x + 8) % DIM_THREAD_BLOCK_X];
+    sum[threadIdx.x] += sum[(threadIdx.x + 4) % DIM_THREAD_BLOCK_X];
+    sum[threadIdx.x] += sum[(threadIdx.x + 2) % DIM_THREAD_BLOCK_X];
+    sum[threadIdx.x] += sum[(threadIdx.x + 1) % DIM_THREAD_BLOCK_X];
+    __syncthreads();
+    res[i] = sum[threadIdx.x / WARP_SIZE * WARP_SIZE];
+    sum[threadIdx.x] = 0.0;
   }
 }
 
@@ -128,7 +127,7 @@ __global__ void spmv(int* row, int* col, float* data, float* vec, float* res, in
 int main(){
 
   int dim=40000;
-  int n=dim*dim/10;
+  int n=dim*dim/100;
   int *row = (int*)malloc(sizeof(int)*(dim+1));
   int *col = (int*)malloc(sizeof(int)*n);
   float *data = (float*)malloc(sizeof(float)*n);
